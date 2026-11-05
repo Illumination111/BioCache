@@ -1,0 +1,29 @@
+{
+  "command": [
+    "experiments/lif_kv_feasibility/run_capacity_diagnostics.py"
+  ],
+  "python": "3.11.18 (main, Oct 26 2026, 18:19:35) [GCC 14.3.0]",
+  "torch": "2.7.1+cu128",
+  "cuda_runtime": "12.8",
+  "spikingjelly": "0.0.0.0.14",
+  "lif_operator": "ParametricLIFNode",
+  "lif_surrogate": "ATan(alpha=2.0)",
+  "source_sha256": {
+    "src/biocache/__init__.py": "c49b731dc39307cb90587f3f2c22f75b55fef806eaf0c6f2e8ee4fdaba8b19a3",
+    "src/biocache/artifacts.py": "0ec158550b6ca0e55c009d683cab8e092c3b7a269957058d27ad0b3f7f151559",
+    "src/biocache/config.py": "2d38a2746e83def2a5aa14e031f5f08a8376b09005d44eff49e791bf0dc3108e",
+    "src/biocache/data.py": "d4e277de71b0ddb46b43fd1325d05194d27e32a149324267a102c5d02548b294",
+    "src/biocache/memory/__init__.py": "b321be7fd1c931f3aaa72d5e14d5034eb916d726616a666733fa159b99c90fe4",
+    "src/biocache/memory/layered_array.py": "08f57f5680ceeb9ff5405d8172f8eeef91b67dfbabae4c35d5ec34d6721174e0",
+    "src/biocache/memory/lif.py": "d437305dbdcfe3b54ceb727615c137e64d7898b2a7bef76688fc03f2e1ff1062",
+    "src/biocache/memory/readout.py": "6867745808e70cc7049ce2784dc303f5fa3cf3d8b529c4ffe303c6f92883e88a",
+    "experiments/lif_kv_feasibility/build_report.py": "2fc0041bb19f08b72385f716aee8cf6e1c5e14045cb538d67835eb3036fc565d",
+    "experiments/lif_kv_feasibility/run_capacity_diagnostics.py": "1872495e5db97c0863a0404d1de5cd2af057149ee3c3a9147aa10af46e853a09",
+    "experiments/lif_kv_feasibility/run_propagation.py": "b36e2b3a2c0055cc3a1ce16a4667327430be5715edc783d52c2294c804c3f31c",
+    "experiments/lif_kv_feasibility/run_synthetic.py": "e857b075c0f5e775bbade00c7deafbb74d172c8bff3c22ae6a3590cf4ded470a"
+  },
+  "platform": "Linux-7.0.0-38-generic-x86_64-with-glibc2.39",
+  "git_revision": "12e3791aae4580f769a04aec0ea4135f1b62ca8c",
+  "working_tree_dirty": true,
+  "cuda_available": true
+}

@@ -1,0 +1,146 @@
+{
+  "protocol": "Frozen baseline checkpoints; original held-out histories; zero delay; 8 queries per history, q=2*k_i without noise. Query permutation is cyclic over these 8 queries; mean Value reference uses the original history. No retraining.",
+  "command": {
+    "checkpoints": "outputs/synthetic_spikingjelly",
+    "output": "outputs/capacity_diagnostics/query_sensitivity.json",
+    "seeds": [
+      11,
+      22,
+      33
+    ]
+  },
+  "rows": [
+    {
+      "seed": 11,
+      "pattern": "low_rank",
+      "queries_per_history": 8,
+      "mse": 0.5093962550163269,
+      "query_permuted_mse": 0.5081474184989929,
+      "mean_value_mse": 0.4544479548931122,
+      "student_query_variation_rms": 0.027610192075371742,
+      "teacher_query_variation_rms": 0.5458085536956787,
+      "variation_ratio": 0.050585854487663624
+    },
+    {
+      "seed": 11,
+      "pattern": "random_association",
+      "queries_per_history": 8,
+      "mse": 0.6193097233772278,
+      "query_permuted_mse": 0.6176360249519348,
+      "mean_value_mse": 0.5730682015419006,
+      "student_query_variation_rms": 0.02170882374048233,
+      "teacher_query_variation_rms": 0.7468304634094238,
+      "variation_ratio": 0.029067940856854445
+    },
+    {
+      "seed": 11,
+      "pattern": "unique_event",
+      "queries_per_history": 8,
+      "mse": 0.13202689588069916,
+      "query_permuted_mse": 0.13209161162376404,
+      "mean_value_mse": 0.09954944998025894,
+      "student_query_variation_rms": 0.007735797204077244,
+      "teacher_query_variation_rms": 0.2760659456253052,
+      "variation_ratio": 0.02802155545319152
+    },
+    {
+      "seed": 11,
+      "pattern": "similar_keys",
+      "queries_per_history": 8,
+      "mse": 0.07210202515125275,
+      "query_permuted_mse": 0.0721021220088005,
+      "mean_value_mse": 0.0003470407973509282,
+      "student_query_variation_rms": 0.0013898167526349425,
+      "teacher_query_variation_rms": 0.000840896915178746,
+      "variation_ratio": 1.6527789881825348
+    },
+    {
+      "seed": 22,
+      "pattern": "low_rank",
+      "queries_per_history": 8,
+      "mse": 0.29236459732055664,
+      "query_permuted_mse": 0.29119250178337097,
+      "mean_value_mse": 0.25780996680259705,
+      "student_query_variation_rms": 0.02975189872086048,
+      "teacher_query_variation_rms": 0.4629126489162445,
+      "variation_ratio": 0.0642710861120659
+    },
+    {
+      "seed": 22,
+      "pattern": "random_association",
+      "queries_per_history": 8,
+      "mse": 0.6401643753051758,
+      "query_permuted_mse": 0.6394436359405518,
+      "mean_value_mse": 0.5848738551139832,
+      "student_query_variation_rms": 0.03207293152809143,
+      "teacher_query_variation_rms": 0.7541486024856567,
+      "variation_ratio": 0.0425286626831632
+    },
+    {
+      "seed": 22,
+      "pattern": "unique_event",
+      "queries_per_history": 8,
+      "mse": 0.13915783166885376,
+      "query_permuted_mse": 0.13922230899333954,
+      "mean_value_mse": 0.10811327397823334,
+      "student_query_variation_rms": 0.0063104527071118355,
+      "teacher_query_variation_rms": 0.2944018840789795,
+      "variation_ratio": 0.021434824464027287
+    },
+    {
+      "seed": 22,
+      "pattern": "similar_keys",
+      "queries_per_history": 8,
+      "mse": 0.05940955877304077,
+      "query_permuted_mse": 0.059409551322460175,
+      "mean_value_mse": 0.0003398153930902481,
+      "student_query_variation_rms": 0.0013122438685968518,
+      "teacher_query_variation_rms": 0.0008009472512640059,
+      "variation_ratio": 1.6383649067100847
+    },
+    {
+      "seed": 33,
+      "pattern": "low_rank",
+      "queries_per_history": 8,
+      "mse": 0.40584036707878113,
+      "query_permuted_mse": 0.40860649943351746,
+      "mean_value_mse": 0.3270532488822937,
+      "student_query_variation_rms": 0.03896341100335121,
+      "teacher_query_variation_rms": 0.4809761643409729,
+      "variation_ratio": 0.08100902683345723
+    },
+    {
+      "seed": 33,
+      "pattern": "random_association",
+      "queries_per_history": 8,
+      "mse": 0.6571146845817566,
+      "query_permuted_mse": 0.6577944755554199,
+      "mean_value_mse": 0.6028109788894653,
+      "student_query_variation_rms": 0.03069022297859192,
+      "teacher_query_variation_rms": 0.766374409198761,
+      "variation_ratio": 0.04004599137212623
+    },
+    {
+      "seed": 33,
+      "pattern": "unique_event",
+      "queries_per_history": 8,
+      "mse": 0.1369602084159851,
+      "query_permuted_mse": 0.13703638315200806,
+      "mean_value_mse": 0.1030140295624733,
+      "student_query_variation_rms": 0.005692131817340851,
+      "teacher_query_variation_rms": 0.2915908098220825,
+      "variation_ratio": 0.01952095753914182
+    },
+    {
+      "seed": 33,
+      "pattern": "similar_keys",
+      "queries_per_history": 8,
+      "mse": 0.08558826148509979,
+      "query_permuted_mse": 0.08558827638626099,
+      "mean_value_mse": 0.00043798601836897433,
+      "student_query_variation_rms": 0.00124205625616014,
+      "teacher_query_variation_rms": 0.0009217584156431258,
+      "variation_ratio": 1.347485669868864
+    }
+  ]
+}

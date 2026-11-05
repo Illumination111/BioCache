@@ -53,3 +53,6 @@ and [architecture](docs/architecture.md). Raw runs and checkpoints stay in
 
 SpikingJelly preserves learnable per-neuron tau/threshold through parameter
 mapping. State exports use version 2; old version-1 states are rejected.
+
+See [storage implementation and capacity analysis](docs/storage_analysis.md) for
+current bottlenecks, neuron-count controls, and improvement priorities.

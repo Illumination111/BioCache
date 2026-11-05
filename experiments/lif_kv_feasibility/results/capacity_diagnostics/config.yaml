@@ -1,0 +1,86 @@
+array:
+  columns: 4
+  cross_layer_connections: false
+  event_duration: 1.0
+  external_input: first_column_first_microstep_only
+  layers: 1
+  microsteps_per_token: 4
+  neurons_per_column: 64
+  reset: soft
+  tau:
+  - 16.0
+  - 64.0
+  - 256.0
+  - 1024.0
+  threshold: 0.5
+  topology: adjacent_columns_dense
+  update_mode: synchronous_old_state
+backend: synthetic_only
+data:
+  batch_size: 32
+  head_dim: 8
+  history: 8
+  patterns:
+  - low_rank
+  - random_association
+  - unique_event
+  - similar_keys
+  test_size: 64
+device: cpu
+diagnostic_cases:
+- latent_slots: 4
+  neurons: 64
+  reuse_reference: true
+- latent_slots: 4
+  neurons: 32
+  reuse_reference: false
+- latent_slots: 4
+  neurons: 128
+  reuse_reference: false
+- latent_slots: 8
+  neurons: 64
+  reuse_reference: false
+evaluation:
+  absolute_tolerance: 1.0e-06
+  delay_modes:
+  - wait
+  - interference
+  delays:
+  - 0
+  - 16
+  - 64
+  - 256
+  improvement_fraction: 0.2
+  memory_events:
+  - 1000
+  - 10000
+interpretation: Exploratory controls, three seeds, fixed 100-step training. Width
+  also changes W/encoder/reader parameters and compute; it is not an isolated test
+  of state capacity. No threshold retuning or multiple-comparison correction.
+model_id: HuggingFaceTB/SmolVLM2-500M-Video-Instruct
+model_revision: REQUIRED_BEFORE_REAL_MODEL_RUN
+readout:
+  controls:
+  - first_column
+  - all_columns
+  hidden: 64
+  latent_slots: 4
+  primary: last_column
+seeds:
+- 11
+- 22
+- 33
+threads: 1
+training:
+  learning_rate: 0.002
+  steps: 100
+  tbptt_steps: 32
+  train_delays:
+  - 0
+  - 4
+  - 16
+variants:
+- lif
+- ema
+- disconnected
+- frozen
