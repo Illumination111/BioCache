@@ -1,0 +1,2 @@
+# CUDA wheel is installed from the official cu128 index before project install.
+torch==2.7.1

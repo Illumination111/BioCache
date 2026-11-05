@@ -1,0 +1,15 @@
+seed: 42
+array:
+  layers: 2
+  columns: 4
+  neurons_per_column: 16
+  microsteps_per_token: 4
+  event_duration: 1.0
+  tau: [16.0, 64.0, 256.0, 1024.0]
+  threshold: 0.5
+  topology: adjacent_columns_dense
+  cross_layer_connections: false
+  update_mode: synchronous_old_state
+  external_input: first_column_first_microstep_only
+  reset: soft
+microsteps_observed: 16

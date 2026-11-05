@@ -1,0 +1,42 @@
+model_id: HuggingFaceTB/SmolVLM2-500M-Video-Instruct
+model_revision: REQUIRED_BEFORE_REAL_MODEL_RUN
+backend: synthetic_only
+device: cpu
+threads: 1
+seeds: [11, 22, 33]
+variants: [lif, ema, disconnected, frozen]
+array:
+  layers: 1
+  columns: 4
+  neurons_per_column: 64
+  microsteps_per_token: 4
+  event_duration: 1.0
+  tau: [16.0, 64.0, 256.0, 1024.0]
+  threshold: 0.5
+  topology: adjacent_columns_dense
+  cross_layer_connections: false
+  update_mode: synchronous_old_state
+  external_input: first_column_first_microstep_only
+  reset: soft
+readout:
+  primary: last_column
+  controls: [first_column, all_columns]
+  latent_slots: 4
+  hidden: 64
+data:
+  history: 8
+  head_dim: 8
+  batch_size: 32
+  test_size: 64
+  patterns: [low_rank, random_association, unique_event, similar_keys]
+training:
+  steps: 100
+  learning_rate: 0.002
+  train_delays: [0, 4, 16]
+  tbptt_steps: 32
+evaluation:
+  delays: [0, 16, 64, 256]
+  delay_modes: [wait, interference]
+  improvement_fraction: 0.20
+  absolute_tolerance: 0.000001
+  memory_events: [1000, 10000]
