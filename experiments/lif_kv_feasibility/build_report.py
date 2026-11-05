@@ -30,7 +30,7 @@ def main():
     memory = read(synth / "memory.json")
     e0 = read(prop / "metrics.json")
     with (evidence / "summary.csv").open("w", encoding="utf-8", newline="") as f:
-        writer = csv.DictWriter(f, fieldnames=list(summary[0]))
+        writer = csv.DictWriter(f, fieldnames=list(summary[0]), lineterminator="\n")
         writer.writeheader()
         writer.writerows(summary)
     lif = [read(path) for path in sorted(synth.glob("lif_*.json"))]
