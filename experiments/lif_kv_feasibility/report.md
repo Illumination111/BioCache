@@ -14,17 +14,17 @@
 
 ## 环境与实际命令
 
-环境：`/data/user25101366/.conda/envs/biocache`，Python 3.11.18，PyTorch 2.7.1+cu128，CUDA runtime 12.8。GPU 为 A100，CUDA 前后向测试通过；本轮三种子实验使用 CPU、单线程。
+环境：`/data/user25101366/.conda/envs/biocache`，Python 3.11.18，PyTorch 2.7.1+cu128，CUDA runtime 12.8，SpikingJelly 0.0.0.0.14。使用官方 ParametricLIFNode 与 ATan，torch 后端。GPU 为 A100，CUDA 前后向测试通过；本轮三种子实验使用 CPU、单线程。
 
 ```bash
 conda activate /data/user25101366/.conda/envs/biocache
 python -m pytest -q
-python experiments/lif_kv_feasibility/run_propagation.py --output outputs/propagation
-python experiments/lif_kv_feasibility/run_synthetic.py --output outputs/synthetic_memory
-python experiments/lif_kv_feasibility/build_report.py
+python experiments/lif_kv_feasibility/run_propagation.py --output outputs/propagation_spikingjelly
+python experiments/lif_kv_feasibility/run_synthetic.py --output outputs/synthetic_spikingjelly
+python experiments/lif_kv_feasibility/build_report.py --propagation outputs/propagation_spikingjelly --synthetic outputs/synthetic_spikingjelly
 ```
 
-测试结果：17 passed（包含 CUDA，未跳过）；依赖 `pip check` 通过。原始输出保留在项目 outputs；精简证据包含逐种子完整 JSON、CSV、配置、版本记录和图像。checkpoint 留在 outputs。
+测试结果：20 passed in 1.97s（包含 CUDA，未跳过）；依赖 `pip check` 通过。原始输出保留在项目 outputs；精简证据包含逐种子完整 JSON、CSV、配置、版本记录和图像。checkpoint 留在 outputs。
 
 ## 传播
 
@@ -38,9 +38,9 @@ python experiments/lif_kv_feasibility/build_report.py
 
 | Seed | 初始 MSE | 训练后 MSE | 相对下降 |
 |---|---:|---:|---:|
-| 11 | 0.630188 | 0.532667 | 15.5% |
-| 22 | 0.640265 | 0.483455 | 24.5% |
-| 33 | 0.640571 | 0.531212 | 17.1% |
+| 11 | 0.630188 | 0.529303 | 16.0% |
+| 22 | 0.640265 | 0.479994 | 25.0% |
+| 33 | 0.640571 | 0.525995 | 17.9% |
 
 encoder、W、tau、threshold、readout 梯度范数逐参数记录于 JSON；LIF 三种子均有有限非零梯度。checkpoint 恢复后，当前输出、下一事件状态及输出逐值一致。
 
@@ -50,9 +50,9 @@ encoder、W、tau、threshold、readout 梯度范数逐参数记录于 JSON；LI
 
 | 数据 | 模式 | 延迟 | MSE 均值±样本标准差 | 清零 MSE | 打乱 MSE |
 |---|---|---:|---:|---:|---:|
-| similar_keys | wait | 16 | 0.077315±0.004525 | 0.126541 | 0.157654 |
-| similar_keys | wait | 64 | 0.078353±0.004299 | 0.126541 | 0.155025 |
-| similar_keys | wait | 256 | 0.082862±0.003682 | 0.126541 | 0.146773 |
+| similar_keys | wait | 16 | 0.075118±0.006375 | 0.126591 | 0.157107 |
+| similar_keys | wait | 64 | 0.076064±0.006034 | 0.126591 | 0.154182 |
+| similar_keys | wait | 256 | 0.080728±0.004791 | 0.126591 | 0.145225 |
 
 上表只列通过的非零延迟条件，其他条件均未通过。完整通过/失败列表见 [summary.csv](results/summary.csv) 和 [summary.json](results/synthetic/summary.json)。只有3个种子，未做统计显著性推断，不能声称一般历史 KV 存储成功。
 
@@ -66,14 +66,18 @@ encoder、W、tau、threshold、readout 梯度范数逐参数记录于 JSON；LI
 
 | 事件数 | 持久状态字节 | 完整 KV 字节 | 缓存比 | 新增静态模块+状态字节 |
 |---:|---:|---:|---:|---:|
-| 1000 | 2061 | 64000 | 31.05 | 509049 |
-| 10000 | 2061 | 640000 | 310.53 | 509049 |
+| 1000 | 2061 | 64000 | 31.05 | 509053 |
+| 10000 | 2061 | 640000 | 310.53 | 509053 |
 
-静态参数 126,744 个、506,976 字节，其中列间 W 12,288 个；另有 12 字节连接 mask。这里包括三个诊断读出器和三个探针，均未从统计中隐藏。spikes 为 FP32，状态按实际存储计算；持续流状态固定五个 tensor，推理无 autograd 图、无历史 KV 容器。
+静态参数 126,745 个、506,980 字节，其中列间 W 12,288 个；另有 12 字节连接 mask。这里包括三个诊断读出器和三个探针，均未从统计中隐藏。spikes 为 FP32，状态按实际存储计算；持续流状态固定五个 tensor，推理无 autograd 图、无历史 KV 容器。
 
-单样本 CPU 写入 p50=0.484 ms、p95=0.503 ms（前256事件）。全进程峰值 RSS=939,601,920 字节，包含教师/训练/框架，不是学生独立部署峰值；本轮 CPU 运行不报告 GPU 训练峰值。每批次写入、读取计时在逐种子 JSON。
+单样本 CPU 写入 p50=0.797 ms、p95=0.882 ms（前256事件）。全进程峰值 RSS=809,304,064 字节，包含教师/训练/框架，不是学生独立部署峰值；本轮 CPU 运行不报告 GPU 训练峰值。每批次写入、读取计时在逐种子 JSON。
 
 缓存有界性通过；静态模块使短历史总开销高于完整 KV。未测真实 VLM 端到端峰值、端侧延迟或能耗。
+
+## 后端变更
+
+本报告结果已使用 SpikingJelly 后端重新运行。旧原生 PyTorch / 自定义代理梯度的历史结果保留在 Git 历史与旧 outputs，不作为本报告当前指标。连续时间常数映射为官方 PLIF 衰减参数，阈值通过归一化保留可训练性；没有重写充电、发放、软重置或代理反向算子。checkpoint 状态版本升为2，旧版本明确拒绝导入。
 
 ## 限制与下一步
 

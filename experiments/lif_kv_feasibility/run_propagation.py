@@ -61,6 +61,6 @@ def run(config, output):
 if __name__ == "__main__":
     p = argparse.ArgumentParser()
     p.add_argument("--config", default="experiments/lif_kv_feasibility/configs/propagation.yaml")
-    p.add_argument("--output", default="outputs/propagation")
+    p.add_argument("--output", default="outputs/propagation_spikingjelly")
     args = p.parse_args()
     run(load_config(args.config), args.output)

@@ -7,4 +7,6 @@ dependencies:
   - pip:
       - --extra-index-url https://download.pytorch.org/whl/cu128
       - torch==2.7.1+cu128
+      - torchvision==0.22.1+cu128
+      - spikingjelly==0.0.0.0.14
       - -e .[dev]

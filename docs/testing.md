@@ -3,12 +3,13 @@
 Validation separates implementation correctness, signal propagation, and useful
 information retention. Correct dynamics and propagation do not establish useful
 KV storage or readout quality.
-Current experiments use synthetic KV tensors without a pretrained VLM.
+Current experiments use synthetic KV tensors without a pretrained VLM. LIF uses
+SpikingJelly ParametricLIFNode and ATan; details are in [readout](readout.md).
 
 ## Implementation tests
 
 Run `python -m pytest -q` from the repository root in the `biocache` environment.
-[test_memory.py](../tests/test_memory.py) contains 17 cases, including five
+[test_memory.py](../tests/test_memory.py) contains 20 cases, including five
 parameterized invalid-configuration cases.
 
 | Area | Method |
@@ -22,9 +23,10 @@ parameterized invalid-configuration cases.
 | Causality | Change future KV and require earlier reads to remain identical. |
 | Memory | Stream 100 events without autograd, check fixed tensor bytes, and verify detach cuts the training graph. |
 | Contracts | Reject invalid topology, dimensions, and head ratios; compare teacher attention with explicit softmax attention. |
+| Library compatibility | Compare SpikingJelly PLIF against stock LIF forward in train/eval and gradients in training. Check heterogeneous tau/threshold gradients, internal state cleanup, and interleaved streams. |
 | CUDA | Run a small GPU write/read/backward pass and check finite output and a W gradient. |
 
-The local run recorded **17 passed**, including CUDA. Without CUDA that case is
+The local run recorded **20 passed**, including CUDA. Without CUDA that case is
 skipped. GitHub CI uses CPU PyTorch and runs pytest plus the propagation test;
 it does not run the full synthetic storage experiment.
 
@@ -122,8 +124,8 @@ Use the commands in [README](../README.md). Existing run directories are rejecte
 choose fresh output paths for reruns. For custom paths, the report builder accepts
 `--propagation PATH --synthetic PATH --output PATH`.
 
-- `outputs/propagation/`: full topology and propagation artifacts.
-- `outputs/synthetic_memory/`: per-seed metrics, checkpoints, summary, and memory data.
+- `outputs/propagation_spikingjelly/`: full topology and propagation artifacts.
+- `outputs/synthetic_spikingjelly/`: per-seed metrics, checkpoints, summary, and memory data.
 - [Recorded evidence](../experiments/lif_kv_feasibility/results/): committed JSON, CSV, configurations, and plots.
 - [Report](../experiments/lif_kv_feasibility/report.md): observed results and limitations.
 

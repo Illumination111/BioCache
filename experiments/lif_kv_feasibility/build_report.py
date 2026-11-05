@@ -13,9 +13,10 @@ def read(path):
 
 def main():
     p = argparse.ArgumentParser()
-    p.add_argument("--propagation", default="outputs/propagation")
-    p.add_argument("--synthetic", default="outputs/synthetic_memory")
+    p.add_argument("--propagation", default="outputs/propagation_spikingjelly")
+    p.add_argument("--synthetic", default="outputs/synthetic_spikingjelly")
     p.add_argument("--output", default="experiments/lif_kv_feasibility")
+    p.add_argument("--validation", default="experiments/lif_kv_feasibility/results/validation.json")
     args = p.parse_args()
     prop, synth, dest = Path(args.propagation), Path(args.synthetic), Path(args.output)
     evidence = dest / "results"
@@ -34,24 +35,30 @@ def main():
         writer.writeheader()
         writer.writerows(summary)
     lif = [read(path) for path in sorted(synth.glob("lif_*.json"))]
+    run_info = read(synth / "run.json")
+    validation = read(Path(args.validation))
+    if Path(args.validation).resolve() != (evidence / "validation.json").resolve():
+        shutil.copy2(args.validation, evidence / "validation.json")
     checks = [r for r in summary if r["variant"] == "lif" and r["delay"] > 0]
     passed = [r for r in checks if r["passes_20pct_vs_both"]]
     lines = ["# BioCache 初始验证实测报告", "", "## 测试状态", "",
         "| 测试内容 | 结果 |", "|---|---|",
         f"| 拓扑与传播测试 | {propagation_metrics['status']}；首次发放微步 {propagation_metrics['first_spike_microstep_1based']} |",
-        f"| 合成 KV 存储与延迟读取测试 | 代码与实验完成；整体判据未通过，非零延迟 {len(passed)}/{len(checks)} 条件通过 |",
+        f"| 合成 KV 存储与延迟读取测试 | 代码与实验完成；整体判据{'通过' if len(passed) == len(checks) else '未通过'}，非零延迟 {len(passed)}/{len(checks)} 条件通过 |",
         "| 真实 VLM 逐层 trace 收集 | 未执行 |", "| 真实逐层蒸馏测试 | 未执行 |",
         "| 真实模型替换测试 | 未执行 |", "",
         "完整建立指南的 P0/P1 仅完成本轮实验基础模块，未完成完整框架验收；P2/P3 未完成。", "",
         "## 环境与实际命令", "",
-        "环境：`/data/user25101366/.conda/envs/biocache`，Python 3.11.18，"
-        "PyTorch 2.7.1+cu128，CUDA runtime 12.8。GPU 为 A100，CUDA 前后向测试通过；本轮三种子实验使用 CPU、单线程。", "",
+        f"环境：`/data/user25101366/.conda/envs/biocache`，Python {run_info['python'].split()[0]}，"
+        f"PyTorch {run_info['torch']}，CUDA runtime {run_info['cuda_runtime']}，"
+        f"SpikingJelly {run_info['spikingjelly']}。使用官方 ParametricLIFNode 与 ATan，torch 后端。"
+        "GPU 为 A100，CUDA 前后向测试通过；本轮三种子实验使用 CPU、单线程。", "",
         "```bash", "conda activate /data/user25101366/.conda/envs/biocache",
         "python -m pytest -q",
         f"python experiments/lif_kv_feasibility/run_propagation.py --output {prop}",
         f"python experiments/lif_kv_feasibility/run_synthetic.py --output {synth}",
-        "python experiments/lif_kv_feasibility/build_report.py", "```", "",
-        "测试结果：17 passed（包含 CUDA，未跳过）；依赖 `pip check` 通过。原始输出保留在项目 outputs；"
+        f"python experiments/lif_kv_feasibility/build_report.py --propagation {prop} --synthetic {synth}", "```", "",
+        f"测试结果：{validation['result']}（包含 CUDA，未跳过）；依赖 `pip check` 通过。原始输出保留在项目 outputs；"
         "精简证据包含逐种子完整 JSON、CSV、配置、版本记录和图像。checkpoint 留在 outputs。", "",
         "## 传播", "", "![传播热图与 raster](results/propagation/propagation.png)", "",
         "受控权重下，C=4 时末列在第4微步首次发放；软重置、断链、片间隔离检查通过。这只证明动力学实现正确。", "",
@@ -97,6 +104,10 @@ def main():
         f"全进程峰值 RSS={memory['process_peak_rss_bytes_including_training']:,} 字节，包含教师/训练/框架，"
         "不是学生独立部署峰值；本轮 CPU 运行不报告 GPU 训练峰值。每批次写入、读取计时在逐种子 JSON。", "",
         "缓存有界性通过；静态模块使短历史总开销高于完整 KV。未测真实 VLM 端到端峰值、端侧延迟或能耗。", "",
+        "## 后端变更", "",
+        "本报告结果已使用 SpikingJelly 后端重新运行。旧原生 PyTorch / 自定义代理梯度的历史结果保留在 Git 历史与旧 outputs，"
+        "不作为本报告当前指标。连续时间常数映射为官方 PLIF 衰减参数，阈值通过归一化保留可训练性；"
+        "没有重写充电、发放、软重置或代理反向算子。checkpoint 状态版本升为2，旧版本明确拒绝导入。", "",
         "## 限制与下一步", "",
         "目前末列在低复杂度平均 Value 读取场景可保留部分信息；随机/唯一事件和持续干扰条件不足。"
         "下一步先固定预算，检查连接权重与阈值、容量、训练延迟分布和 Query-conditioned readout，"

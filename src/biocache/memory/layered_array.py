@@ -4,18 +4,7 @@ import math
 import torch
 from torch import nn
 from biocache.config import ArrayConfig
-
-
-class HardSpike(torch.autograd.Function):
-    @staticmethod
-    def forward(ctx, voltage):
-        ctx.save_for_backward(voltage)
-        return (voltage >= 0).to(voltage.dtype)
-
-    @staticmethod
-    def backward(ctx, grad):
-        (voltage,) = ctx.saved_tensors
-        return grad / (1 + 5 * voltage.abs()).square()
+from biocache.memory.lif import SpikingJellyLIF
 
 
 @dataclass(frozen=True)
@@ -40,6 +29,7 @@ class LIFArray(nn.Module):
         if mode not in ("lif", "ema"):
             raise ValueError("mode must be lif or ema")
         self.config, self.mode = config, mode
+        self.lif = SpikingJellyLIF()
         l, c, n = config.layers, config.columns, config.neurons_per_column
         # Full dense matrices. Diagonal initialization encourages a propagation path.
         weights = torch.eye(n).expand(l, c - 1, n, n).clone() * 0.9
@@ -69,13 +59,12 @@ class LIFArray(nn.Module):
         synaptic = torch.einsum("lcji,blci->blcj", self.W * self.connection_mask,
                                state.spikes[:, :, :-1])
         drive = torch.cat((current.unsqueeze(2), synaptic), dim=2)
-        decay = torch.exp(-dt / self.log_tau.exp().clamp_min(1e-4))
+        tau = self.log_tau.exp().clamp_min(1e-4)
         if self.mode == "lif":
-            pre = decay * state.u + drive
             threshold = self.log_threshold.exp().clamp_min(1e-4)
-            spikes = HardSpike.apply(pre - threshold)
-            u = pre - threshold * spikes
+            u, spikes = self.lif(state.u, drive, tau, threshold, dt)
         else:
+            decay = torch.exp(-dt / tau)
             # Linear cascade / EMA control: same allocated state bytes; no threshold/reset.
             # Both buffers are reported, although spikes here duplicates the current EMA.
             u = decay * state.u + (1 - decay) * drive

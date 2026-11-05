@@ -2,22 +2,45 @@
 
 ## LIF operators
 
-The implementation uses native PyTorch tensor operations in
-[layered_array.py](../src/biocache/memory/layered_array.py), not SpikingJelly.
-Adjacent-column currents are computed from the previous microstep's spikes with
-`torch.einsum`. All columns update synchronously:
+The implementation uses **SpikingJelly 0.0.0.0.14**:
+`activation_based.neuron.ParametricLIFNode`, with `surrogate.ATan(alpha=2.0)`,
+`decay_input=False`, `v_reset=None`, `detach_reset=False`, and the single-step
+`torch` backend. See the [official neuron implementation](https://spikingjelly.readthedocs.io/zh-cn/0.0.0.0.14/_modules/spikingjelly/activation_based/neuron.html).
+
+[lif.py](../src/biocache/memory/lif.py) adapts physical parameters and external
+state to the unmodified library operators. The library performs charge, firing,
+and soft reset; there is no custom autograd spike function.
+Adjacent-column currents still use old spikes and `torch.einsum` in
+[layered_array.py](../src/biocache/memory/layered_array.py).
 
 ```text
-u_pre = exp(-dt / tau) * u_old + current
-spikes = H(u_pre - threshold)
-u_new = u_pre - threshold * spikes
+Physical dynamics:
+  u_pre = exp(-dt / tau) * u_old + current
+  spikes = H(u_pre - threshold)
+  u_new = u_pre - threshold * spikes
+
+Mapping to the library:
+  v_old = u_old / threshold
+  x = current / threshold
+  sigmoid(w) = 1 - exp(-dt / tau)
+  v_new, spikes = ParametricLIFNode(v_old, x, w)
+  u_new = threshold * v_new
 ```
 
-Tau and threshold are positive parameters. The custom `HardSpike` autograd
-function uses a hard threshold in forward, and surrogate derivative
-`1 / (1 + 5 * abs(u_pre - threshold))^2` in backward. Training and inference
-have the same hard-spike forward dynamics. This is a dense PyTorch implementation,
-without custom event-driven kernels or a SpikingJelly backend.
+`torch.func.functional_call` supplies the derived per-neuron w tensor from
+trainable physical tau for each microstep. The library's original scalar w is
+frozen; it is not an additional trained time constant. This keeps per-neuron
+tau and threshold trainable and respects variable microstep duration without
+subclassing or changing the library charge/fire/reset implementations.
+The mapping is equivalent in exact arithmetic; FP32 rounding can differ slightly.
+
+The surrogate is the library's ATan derivative in normalized voltage coordinates,
+not the previous custom fast-sigmoid gradient. Training must therefore be rerun.
+The library node is reset after each call, including error paths, so all retained
+memory stays in the explicit `LIFState`; no duplicate voltage or graph is hidden
+in the node. Checkpoint state version 2 records this dynamics implementation and
+rejects old version-1 states. The torch backend supports CPU and CUDA; this does
+not claim a custom CuPy/CUDA kernel or event-driven acceleration.
 
 ## Reading the state
 

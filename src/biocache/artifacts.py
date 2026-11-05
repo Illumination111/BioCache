@@ -1,3 +1,5 @@
+from importlib.metadata import version
+import hashlib
 import json
 import platform
 import subprocess
@@ -17,6 +19,11 @@ def start_run(output, config):
         revision = "uncommitted"
     write_json(path / "run.json", {"command": sys.argv, "python": sys.version,
                "torch": torch.__version__, "cuda_runtime": torch.version.cuda,
+               "spikingjelly": version("spikingjelly"),
+               "lif_operator": "ParametricLIFNode", "lif_surrogate": "ATan(alpha=2.0)",
+               "source_sha256": {str(p): hashlib.sha256(p.read_bytes()).hexdigest()
+                   for folder in ("src", "experiments/lif_kv_feasibility")
+                   for p in sorted(Path(folder).rglob("*.py"))},
                "platform": platform.platform(), "git_revision": revision,
                "working_tree_dirty": bool(subprocess.run(["git", "status", "--porcelain"],
                     capture_output=True, text=True).stdout),

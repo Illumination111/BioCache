@@ -1,9 +1,13 @@
 {
   "command": "python -m pytest -q",
-  "result": "17 passed in 1.86s",
+  "result": "20 passed in 1.97s",
   "cuda_test": "passed (not skipped)",
   "pip_check": "No broken requirements found.",
   "environment": "/data/user25101366/.conda/envs/biocache",
+  "biocache": "0.2.0",
   "torch": "2.7.1+cu128",
-  "cuda_runtime": "12.8"
+  "cuda_runtime": "12.8",
+  "spikingjelly": "0.0.0.0.14",
+  "lif_operator": "ParametricLIFNode",
+  "surrogate": "ATan(alpha=2.0)"
 }

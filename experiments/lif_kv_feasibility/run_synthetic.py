@@ -256,7 +256,7 @@ def plot(results, path):
 def main():
     p = argparse.ArgumentParser()
     p.add_argument("--config", default="experiments/lif_kv_feasibility/configs/synthetic_memory.yaml")
-    p.add_argument("--output", default="outputs/synthetic_memory")
+    p.add_argument("--output", default="outputs/synthetic_spikingjelly")
     p.add_argument("--device", help="Override config device, e.g. cpu or cuda:1")
     args = p.parse_args()
     config = load_config(args.config)

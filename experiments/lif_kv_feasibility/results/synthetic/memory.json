@@ -5,7 +5,7 @@
       "state_bytes": 2061,
       "full_kv_bytes": 64000,
       "cache_compression_ratio": 31.052886948083454,
-      "student_static_plus_state_bytes": 509049,
+      "student_static_plus_state_bytes": 509053,
       "graph_retained": false,
       "runtime_tensor_count": 5
     },
@@ -14,14 +14,14 @@
       "state_bytes": 2061,
       "full_kv_bytes": 640000,
       "cache_compression_ratio": 310.52886948083454,
-      "student_static_plus_state_bytes": 509049,
+      "student_static_plus_state_bytes": 509053,
       "graph_retained": false,
       "runtime_tensor_count": 5
     }
   ],
-  "write_ms_p50": 0.48410543240606785,
-  "write_ms_p95": 0.5034895148128271,
+  "write_ms_p50": 0.7965099066495895,
+  "write_ms_p95": 0.8821457158774137,
   "scope": "Inference state+static modules; includes all diagnostic readouts/probes. CPU process RSS includes teacher/training history; not deployment peak.",
-  "process_peak_rss_bytes_including_training": 939601920,
+  "process_peak_rss_bytes_including_training": 809304064,
   "cuda_peak_allocated_bytes_including_training": null
 }

@@ -76,13 +76,13 @@ class KVMemory(nn.Module):
 
     def export_state(self, state):
         from dataclasses import fields
-        return {"version": 1, "array": self.array.config.asdict(), "mode": self.array.mode,
+        return {"version": 2, "dynamics": "spikingjelly.plif.atan.v1", "array": self.array.config.asdict(), "mode": self.array.mode,
                 "kv_heads": self.kv_heads, "query_heads": self.query_heads, "head_dim": self.head_dim,
                 "state": {f.name: getattr(state, f.name).detach().clone() for f in fields(state)}}
 
     def import_state(self, payload):
         expected = self.export_state(self.array.initial_state(1))
-        for name in ("version", "array", "mode", "kv_heads", "query_heads", "head_dim"):
+        for name in ("version", "dynamics", "array", "mode", "kv_heads", "query_heads", "head_dim"):
             if payload[name] != expected[name]:
                 raise ValueError(f"incompatible state: {name}")
         tensors = payload["state"]

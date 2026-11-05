@@ -16,7 +16,7 @@ flowchart LR
 
 每个 Transformer 层对应独立二维片，层间没有连接。W 的形状为 `[L,C-1,Nout,Nin]`，`einsum` 不混合层维。列间只从旧脉冲读取；所有列同步计算，再统一生成新状态。仅事件首微步注入外部输入，后续微步首列电流严格为零；相邻事件不插入 flush。
 
-动力学：`pre=exp(-dt/tau)*u+I`，`s=H(pre-threshold)`，`u_next=pre-threshold*s`。tau 和 threshold 通过对数参数化保持为正；硬脉冲前向、fast-sigmoid 代理反向。S 个微步总时长保持为 `event_duration`，dt 为该时长除以 S。零输入等待仍进行完全相同的动力学和时间推进。
+动力学：`pre=exp(-dt/tau)*u+I`，`s=H(pre-threshold)`，`u_next=pre-threshold*s`。tau 和 threshold 通过对数参数化保持为正；由 SpikingJelly ParametricLIFNode 执行充电、硬脉冲发放和软重置，ATan 代理反向。物理 tau 映射到其衰减参数，电压按阈值归一化，保留逐神经元可训练 tau/threshold。S 个微步总时长保持为 `event_duration`，dt 为该时长除以 S。零输入等待仍进行完全相同的动力学和时间推进。
 
 持久态是不可变 dataclass：u/spikes `[B,L,C,N]` FP32、time `[B,L]` FP32、events int64、valid bool。初始状态/重置通过 `initial_state(B)` 创建；`detach()` 截断训练图；导出包含配置和版本，恢复检查 shape/dtype 与 head 契约。本轮没有 stream 管理器，独立流必须使用独立状态。训练无隐式全局状态，每条新序列从零状态开始。
 
@@ -30,4 +30,4 @@ K/V `[B,L,Hkv,Dh]` 经每层线性层编码，附加 `sin(position/16)` 与 `sin
 
 EMA 对照使用线性级联 `u_next=decay*u+(1-decay)*drive`，传播来源是旧 EMA，去掉阈值与 reset；第二缓冲保存 EMA 副本。它与 LIF 的字节相同但存在冗余，并非最优内存实现。断链通过不可训练 mask 切断首对连接，梯度也无法恢复该连接；冻结对照只冻结 W。
 
-读取器的逐步计算、张量形状、latent KV 与 Value 探针的区别见 [LIF implementation and readout](readout.md)。当前 LIF 使用原生 PyTorch 与自定义代理梯度，没有使用 SpikingJelly。
+读取器的逐步计算、张量形状、latent KV 与 Value 探针的区别见 [LIF implementation and readout](readout.md)。当前 LIF 使用 SpikingJelly 官方 ParametricLIFNode 与 ATan，torch 后端；库节点每次调用后 reset，持久状态只保留在显式 LIFState 中。

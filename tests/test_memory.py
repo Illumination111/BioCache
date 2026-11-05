@@ -4,7 +4,7 @@ import pytest
 import torch
 from biocache.config import ArrayConfig
 from biocache.memory import LIFArray, KVMemory
-from biocache.memory.layered_array import HardSpike
+from spikingjelly.activation_based import neuron, surrogate
 from biocache.data import make_sequence, teacher_attention
 
 torch.set_num_threads(1)
@@ -106,7 +106,7 @@ def test_gradients_and_hard_forward_identical():
         infer = m.wait(infer)
     torch.testing.assert_close(infer.u, s.u, rtol=0, atol=0)
     torch.testing.assert_close(infer.spikes, s.spikes, rtol=0, atol=0)
-    assert torch.equal(HardSpike.apply(torch.tensor([-1., 0., 1.])), torch.tensor([0., 1., 1.]))
+    assert torch.equal(surrogate.ATan()(torch.tensor([-1., 0., 1.])), torch.tensor([0., 1., 1.]))
 
 
 def test_serialization_continuation_and_incompatible_state():
@@ -117,6 +117,11 @@ def test_serialization_continuation_and_incompatible_state():
         loaded = m.import_state(m.export_state(s))
         torch.testing.assert_close(m.wait(s).u, m.wait(loaded).u, rtol=0, atol=0)
         assert loaded.u.data_ptr() != s.u.data_ptr()
+    legacy = m.export_state(s)
+    legacy["version"] = 1
+    legacy.pop("dynamics")
+    with pytest.raises(ValueError, match="version"):
+        m.import_state(legacy)
     invalid = m.export_state(s)
     invalid["version"] = 100
     with pytest.raises(ValueError):
@@ -188,3 +193,57 @@ def test_cuda_write_read_backward():
     out = m.read(s, torch.randn(2, 1, 1, 4, device=device))
     out.square().mean().backward()
     assert torch.isfinite(out).all() and m.array.W.grad is not None
+
+
+@pytest.mark.parametrize("training", [True, False])
+def test_spikingjelly_matches_stock_lif_and_releases_internal_state(training):
+    from biocache.memory.lif import SpikingJellyLIF
+    adapter = SpikingJellyLIF().train(training)
+    assert isinstance(adapter.node, neuron.ParametricLIFNode)
+    assert isinstance(adapter.node.surrogate_function, surrogate.ATan)
+    assert adapter.node.v_reset is None and not adapter.node.decay_input
+    # Pick tau/dt so the equivalent library LIF tau is exactly 2.
+    dt, physical_tau, threshold = 0.25, 0.25 / math.log(2), 0.7
+    reference = neuron.LIFNode(tau=2., decay_input=False, v_threshold=1.,
+        v_reset=None, surrogate_function=surrogate.ATan(alpha=2.),
+        detach_reset=False, step_mode="s", backend="torch").train(training)
+    voltage = torch.tensor([[-0.4, 0.8, 0.1]], requires_grad=True)
+    current = torch.tensor([[0.3, 0.6, 0.8]], requires_grad=True)
+    reference.v = voltage / threshold
+    expected_spikes = reference(current / threshold)
+    expected_voltage = reference.v * threshold
+    actual_voltage, actual_spikes = adapter(voltage, current,
+        torch.tensor(physical_tau), torch.tensor(threshold), dt)
+    torch.testing.assert_close(actual_voltage, expected_voltage)
+    torch.testing.assert_close(actual_spikes, expected_spikes, rtol=0, atol=0)
+    # Stock fixed-tau LIF uses a hard, non-surrogate optimized eval path.
+    # Compare training gradients and both training/eval forward outputs.
+    if training:
+        expected_grad = torch.autograd.grad((expected_voltage + expected_spikes).sum(), (voltage, current))
+        actual_grad = torch.autograd.grad((actual_voltage + actual_spikes).sum(), (voltage, current))
+        for actual, expected in zip(actual_grad, expected_grad):
+            torch.testing.assert_close(actual, expected)
+    assert adapter.node.v == 0. and not isinstance(adapter.node.v, torch.Tensor)
+
+
+def test_spikingjelly_interleaved_streams_and_heterogeneous_parameters():
+    from biocache.memory.lif import SpikingJellyLIF
+    adapter = SpikingJellyLIF()
+    tau = torch.tensor([2., 8., 32.], requires_grad=True)
+    threshold = torch.tensor([0.3, 0.5, 0.8], requires_grad=True)
+    u = torch.tensor([0.2, -0.4, 0.6])
+    current = torch.tensor([0.4, -0.2, 0.3])
+    actual, spikes = adapter(u, current, tau, threshold, 0.25)
+    pre = torch.exp(-0.25 / tau) * u + current
+    expected_spikes = (pre >= threshold).float()
+    torch.testing.assert_close(spikes, expected_spikes)
+    torch.testing.assert_close(actual, pre - threshold * expected_spikes)
+    (actual.square().sum() + spikes.sum()).backward()
+    for p in (tau, threshold):
+        assert p.grad is not None and torch.isfinite(p.grad).all() and p.grad.abs().sum() > 0
+    # A different stream cannot affect another call with the original state.
+    adapter(torch.ones(3), torch.ones(3), tau, threshold, 0.25)
+    repeated, repeated_spikes = adapter(u, current, tau, threshold, 0.25)
+    torch.testing.assert_close(actual, repeated, rtol=0, atol=0)
+    torch.testing.assert_close(spikes, repeated_spikes, rtol=0, atol=0)
+    assert adapter.node.v == 0.
