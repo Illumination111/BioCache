@@ -23,6 +23,7 @@ PyTorch 使用 CUDA 12.8 wheel；开发机为 NVIDIA A100、驱动 580.178.04。
 pytest -q
 python experiments/lif_kv_feasibility/run_propagation.py --output outputs/propagation
 python experiments/lif_kv_feasibility/run_synthetic.py --output outputs/synthetic_memory
+python experiments/lif_kv_feasibility/build_report.py
 # 可选 GPU 实验，按实际空闲设备指定：
 python experiments/lif_kv_feasibility/run_synthetic.py --device cuda:1 --output outputs/synthetic_cuda
 ```
@@ -60,3 +61,5 @@ E2 真实 SmolVLM trace、E3 真实逐层蒸馏、E4 模型内替换未执行；
 当前合成 runner 为单层，基础阵列支持多层并通过隔离测试。全列读取器参数更多；EMA 使用与 LIF 相同的两个 FP32 缓冲，其中第二个为冗余 EMA 副本，按实际字节统计。默认训练延迟最大 16，64/256 属于外推测试。没有端侧加速、能耗或真实视频问答质量结论。
 
 详细数据流见 [architecture](docs/architecture.md)，设计边界见 [decisions](docs/decisions.md)。原始两份设计文档保留在 `docs/`。
+
+初始实测：17 项测试通过，E0 通过；E1 非零延迟条件 3/24 达到预登记标准，整体尚未通过。1,000 与 10,000 事件持久状态均为 2,061 字节。训练改善与有界性不能替代存储质量验收，详见实测报告。

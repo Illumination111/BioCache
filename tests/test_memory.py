@@ -89,9 +89,13 @@ def test_read_purity_empty_state_and_reset():
 
 
 def test_gradients_and_hard_forward_identical():
+    torch.manual_seed(51)
     m = KVMemory(cfg(), head_dim=4)
     k, v = torch.randn(3, 2, 1, 4), torch.randn(3, 2, 1, 4)
     s = m.write(m.array.initial_state(3), k, v, torch.zeros(3, 2))
+    # The signal reaches the last column only at the final microstep of the
+    # first event. Advance again so last-column tau participates in the loss.
+    s = m.wait(s)
     q = torch.randn(3, 1, 1, 4)
     loss = m.read(s, q).square().mean()
     loss.backward()
@@ -99,6 +103,7 @@ def test_gradients_and_hard_forward_identical():
         assert p.grad is not None and torch.isfinite(p.grad).all() and p.grad.abs().sum() > 0
     with torch.no_grad():
         infer = m.write(m.array.initial_state(3), k, v, torch.zeros(3, 2))
+        infer = m.wait(infer)
     torch.testing.assert_close(infer.u, s.u, rtol=0, atol=0)
     torch.testing.assert_close(infer.spikes, s.spikes, rtol=0, atol=0)
     assert torch.equal(HardSpike.apply(torch.tensor([-1., 0., 1.])), torch.tensor([0., 1., 1.]))
