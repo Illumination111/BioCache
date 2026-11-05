@@ -1,8 +1,9 @@
 # BioCache
 
 A PyTorch prototype for storing KV information in bounded, layered LIF arrays.
-Implements propagation (E0) and synthetic memory experiments (E1). Real VLM
-integration is pending.
+Includes topology/propagation tests and synthetic KV storage/delayed-readout
+tests. Real VLM integration is pending. LIF dynamics use native PyTorch, with
+custom surrogate gradients; SpikingJelly is not used.
 
 ## Setup
 
@@ -34,13 +35,17 @@ Configs are in `experiments/lif_kv_feasibility/configs/`.
 
 - **Unit tests:** dynamics, propagation timing, layer isolation, causality,
   gradients, state restoration, fixed state size, and CUDA execution.
-- **E0:** inject an isolated current and verify column-by-column propagation.
-- **E1:** train on synthetic KV streams; evaluate delayed Query readout against
+- **Topology and propagation:** inject an isolated current and verify column-by-column propagation.
+- **Synthetic KV storage and delayed readout:** train on synthetic KV streams; evaluate delayed Query readout against
   full-KV attention, with state controls and memory measurements.
 
-Recorded results: **17 tests passed; E0 passed; E1 met its criterion in 3/24
-nonzero-delay conditions and has not passed overall.** Persistent state remained
+Recorded results: **17 unit tests passed; propagation passed; storage/readout
+met its criterion in 3/24 nonzero-delay conditions and has not passed overall.** Persistent state remained
 2,061 bytes at both 1,000 and 10,000 events.
+
+Readout: concatenate membrane voltage and current spikes, map them to fixed
+latent K/V slots with an MLP, then apply Query attention. The default reads the
+last column; first/all-column readers are controls. See [readout details](docs/readout.md).
 
 See [testing methods](docs/testing.md), [experimental results](experiments/lif_kv_feasibility/report.md),
 and [architecture](docs/architecture.md). Raw runs and checkpoints stay in

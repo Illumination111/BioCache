@@ -1,4 +1,4 @@
-"""E0: isolated input, synchronous propagation, layer isolation, broken chain."""
+"""Topology and propagation: isolated input, synchronous propagation, layer isolation, broken chain."""
 import argparse
 import numpy as np
 import torch
@@ -51,7 +51,7 @@ def run(config, output):
     fig.savefig(path / "propagation.png", dpi=150)
     plt.close(fig)
     np.savez_compressed(path / "trajectory.npz", u=u, spikes=s)
-    result = {"E0": "passed", "first_spike_microstep_1based": first,
+    result = {"test": "topology_and_propagation", "status": "passed", "first_spike_microstep_1based": first,
               "activity_per_column": s.mean(axis=(0, 2)).tolist(),
               "state_bytes": state.nbytes(), "layer_isolation": True, "broken_chain": True}
     write_json(path / "metrics.json", result)

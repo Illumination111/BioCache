@@ -1,5 +1,6 @@
 {
-  "E0": "passed",
+  "test": "topology_and_propagation",
+  "status": "passed",
   "first_spike_microstep_1based": [
     1,
     2,

@@ -28,7 +28,7 @@ def main():
                 shutil.copy2(path, folder / path.name)
     summary = read(synth / "summary.json")
     memory = read(synth / "memory.json")
-    e0 = read(prop / "metrics.json")
+    propagation_metrics = read(prop / "metrics.json")
     with (evidence / "summary.csv").open("w", encoding="utf-8", newline="") as f:
         writer = csv.DictWriter(f, fieldnames=list(summary[0]), lineterminator="\n")
         writer.writeheader()
@@ -36,12 +36,12 @@ def main():
     lif = [read(path) for path in sorted(synth.glob("lif_*.json"))]
     checks = [r for r in summary if r["variant"] == "lif" and r["delay"] > 0]
     passed = [r for r in checks if r["passes_20pct_vs_both"]]
-    lines = ["# BioCache 初始验证实测报告", "", "## 阶段状态", "",
-        "| 阶段 | 结果 |", "|---|---|",
-        f"| E0 拓扑/传播 | {e0['E0']}；首次发放微步 {e0['first_spike_microstep_1based']} |",
-        f"| E1 合成 KV | 代码与实验完成；整体判据未通过，非零延迟 {len(passed)}/{len(checks)} 条件通过 |",
-        "| E2 真实 SmolVLM traces | 未执行 |", "| E3 真实逐层蒸馏 | 未执行 |",
-        "| E4 真实模型替换 | 未执行 |", "",
+    lines = ["# BioCache 初始验证实测报告", "", "## 测试状态", "",
+        "| 测试内容 | 结果 |", "|---|---|",
+        f"| 拓扑与传播测试 | {propagation_metrics['status']}；首次发放微步 {propagation_metrics['first_spike_microstep_1based']} |",
+        f"| 合成 KV 存储与延迟读取测试 | 代码与实验完成；整体判据未通过，非零延迟 {len(passed)}/{len(checks)} 条件通过 |",
+        "| 真实 VLM 逐层 trace 收集 | 未执行 |", "| 真实逐层蒸馏测试 | 未执行 |",
+        "| 真实模型替换测试 | 未执行 |", "",
         "完整建立指南的 P0/P1 仅完成本轮实验基础模块，未完成完整框架验收；P2/P3 未完成。", "",
         "## 环境与实际命令", "",
         "环境：`/data/user25101366/.conda/envs/biocache`，Python 3.11.18，"

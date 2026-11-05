@@ -1,4 +1,4 @@
-"""E1: synthetic-only storage probes, query readout, controls and byte accounting."""
+"""Synthetic KV storage and delayed readout: synthetic-only storage probes, query readout, controls and byte accounting."""
 import argparse
 from dataclasses import replace
 import math
@@ -263,7 +263,7 @@ def main():
     if args.device:
         config["device"] = args.device
     if config["array"]["layers"] != 1:
-        raise ValueError("synthetic E1 runner currently tests one layer; E0 tests layer isolation")
+        raise ValueError("synthetic storage runner currently tests one layer; the topology test covers layer isolation")
     torch.set_num_threads(config["threads"])
     path = start_run(args.output, config)
     if config["device"].startswith("cuda"):
@@ -281,8 +281,8 @@ def main():
     checks = [r for r in summary if r["variant"] == "lif" and r["delay"] > 0]
     passed = sum(r["passes_20pct_vs_both"] for r in checks)
     (path / "report.md").write_text(
-        f"# E1 synthetic feasibility\n\nLast-column delay checks passing the predeclared criterion: {passed}/{len(checks)}.\n\n"
-        f"E1: {'passed' if passed == len(checks) else 'not passed across all conditions'}. "
+        f"# Synthetic KV storage and delayed readout\n\nLast-column delay checks passing the predeclared criterion: {passed}/{len(checks)}.\n\n"
+        f"Synthetic KV storage and delayed readout: {'passed' if passed == len(checks) else 'not passed across all conditions'}. "
         "Three seeds are required by the default config; see per-seed JSON, initial/final validation errors, "
         "parameter counts, probes and summary mean/std.\n\n"
         "Attention training uses remote original history targets; distractors are additionally included only in "
@@ -290,9 +290,9 @@ def main():
         "Window baseline uses up to history-length most recent distractors (no full-history quality claim); "
         "wait leaves the exact history unchanged. EMA has the same two allocated float buffers, one redundant. "
         "Readout/probe capacities differ for all-column input and are explicitly counted.\n\n"
-        "E2/E3(real traces)/E4: not executed. No task accuracy or end-to-end VLM compression claims.\n",
+        "Real VLM trace collection, real-layer distillation and model replacement: not executed. No task accuracy or end-to-end VLM compression claims.\n",
         encoding="utf-8")
-    print(f"E1 delay criterion: {passed}/{len(checks)}; artifacts: {path}", flush=True)
+    print(f"Synthetic storage/readout delay criterion: {passed}/{len(checks)}; artifacts: {path}", flush=True)
 
 
 if __name__ == "__main__":

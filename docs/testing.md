@@ -1,7 +1,8 @@
 # Testing methods
 
 Validation separates implementation correctness, signal propagation, and useful
-information retention. Passing unit tests or E0 does not establish E1 quality.
+information retention. Correct dynamics and propagation do not establish useful
+KV storage or readout quality.
 Current experiments use synthetic KV tensors without a pretrained VLM.
 
 ## Implementation tests
@@ -24,9 +25,10 @@ parameterized invalid-configuration cases.
 | CUDA | Run a small GPU write/read/backward pass and check finite output and a W gradient. |
 
 The local run recorded **17 passed**, including CUDA. Without CUDA that case is
-skipped. GitHub CI uses CPU PyTorch and runs pytest plus E0; it does not run E1.
+skipped. GitHub CI uses CPU PyTorch and runs pytest plus the propagation test;
+it does not run the full synthetic storage experiment.
 
-## E0: controlled propagation
+## Topology and propagation test
 
 [run_propagation.py](../experiments/lif_kv_feasibility/run_propagation.py) starts
 from zero state with two independent layers, four columns, and 16 neurons per
@@ -37,12 +39,13 @@ Inject current `0.75` into layer 0, column 0, only at the first microstep. Obser
 microsteps **1, 2, 3, 4**, finite states, initial soft-reset voltage `0.25`, and
 zero activity in other layers. Repeat after cutting the first connection:
 downstream columns must remain zero. Save voltage heatmaps, spike raster,
-trajectory, and metrics. The recorded E0 run passed.
+trajectory, and metrics. The recorded propagation run passed.
 
-## E1: synthetic storage and delayed readout
+## Synthetic KV storage and delayed readout test
 
 Entry: [run_synthetic.py](../experiments/lif_kv_feasibility/run_synthetic.py).
 Settings: [synthetic_memory.yaml](../experiments/lif_kv_feasibility/configs/synthetic_memory.yaml).
+State-to-output computation is documented in [LIF readout](readout.md).
 
 ### Training procedure
 
@@ -96,7 +99,7 @@ and sample standard deviations. No statistical significance test is performed;
 probe scores are diagnostic and are not part of the acceptance rule.
 
 The recorded run passed **3/24 conditions**: similar keys under zero-input
-waiting at delays 16/64/256. E1 has not passed overall. All three LIF seeds
+waiting at delays 16/64/256. The storage/readout test has not passed overall. All three LIF seeds
 improved held-out MSE after training, which alone does not meet this criterion.
 
 ### State, resources, and restoration
@@ -119,7 +122,7 @@ Use the commands in [README](../README.md). Existing run directories are rejecte
 choose fresh output paths for reruns. For custom paths, the report builder accepts
 `--propagation PATH --synthetic PATH --output PATH`.
 
-- `outputs/propagation/`: full E0 artifacts.
+- `outputs/propagation/`: full topology and propagation artifacts.
 - `outputs/synthetic_memory/`: per-seed metrics, checkpoints, summary, and memory data.
 - [Recorded evidence](../experiments/lif_kv_feasibility/results/): committed JSON, CSV, configurations, and plots.
 - [Report](../experiments/lif_kv_feasibility/report.md): observed results and limitations.
